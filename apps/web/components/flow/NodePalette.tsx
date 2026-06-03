@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { Zap, Bot, RefreshCw, Wrench } from 'lucide-react';
-import { AgentNodeData } from './AgentNode';
+import type { AgentNodeData } from './AgentNode';
 
-const nodeTypes: Array<{ type: AgentNodeData['type']; label: string; icon: any; color: string }> = [
-  { type: 'prompt', label: 'Prompt', icon: Zap, color: 'var(--neon-cyan)' },
-  { type: 'agent', label: 'Agent', icon: Bot, color: 'var(--neon-magenta)' },
-  { type: 'reflection', label: 'Reflection', icon: RefreshCw, color: 'var(--neon-lime)' },
-  { type: 'tool', label: 'Tool', icon: Wrench, color: '#fbbf24' },
+const nodeTypes = [
+  { type: 'prompt' as const, label: 'Prompt', icon: Zap, color: 'var(--neon-cyan)' },
+  { type: 'agent' as const, label: 'Agent', icon: Bot, color: 'var(--neon-magenta)' },
+  { type: 'reflection' as const, label: 'Reflection', icon: RefreshCw, color: 'var(--neon-lime)' },
+  { type: 'tool' as const, label: 'Tool', icon: Wrench, color: '#fbbf24' },
 ];
 
 interface NodePaletteProps {
