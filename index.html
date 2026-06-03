@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIBE FORGE • Agentic IDE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        :root {
+            --neon-cyan: #00f5ff;
+            --neon-magenta: #ff00aa;
+            --neon-lime: #39ff14;
+            --panda-white: #f0f0f0;
+            --bg-deep: #0a0a0f;
+            --bg-panel: #121218;
+            --bg-elevated: #1a1a22;
+        }
+        
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .font-display {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .cyberpunk-bg {
+            background: 
+                linear-gradient(rgba(10,10,15,0.95), rgba(10,10,15,0.95)),
+                radial-gradient(circle at 20% 30%, rgba(0,245,255,0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255,0,170,0.02) 0%, transparent 50%);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+        }
+
+        .neon-magenta {
+            text-shadow: 0 0 8px var(--neon-magenta), 0 0 16px var(--neon-magenta);
+        }
+
+        .panel {
+            background-color: var(--bg-panel);
+            border: 1px solid #27272a;
+        }
+
+        .section-header {
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #71717a;
+        }
+
+        .file-item {
+            transition: all 0.1s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .file-item:hover {
+            background-color: #1f1f26;
+            transform: translateX(2px);
+        }
+        
+        .file-item.active {
+            background-color: #27272a;
+            border-left: 3px solid var(--neon-cyan);
+            color: white;
+        }
+
+        .tab {
+            transition: all 0.1s ease;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            background-color: var(--bg-elevated);
+            border-bottom-color: var(--neon-cyan);
+            color: white;
+        }
+
+        #editor {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            tab-size: 4;
+            background: #0f0f14;
+            color: #e4e4e7;
+            resize: none;
+            outline: none;
+        }
+
+        .status-bar {
+            font-size: 0.75rem;
+            background: #0a0a0f;
+            border-top: 1px solid #27272a;
+        }
+
+        .action-btn {
+            transition: all 0.1s ease;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.2);
+        }
+
+        .neon-border {
+            box-shadow: 0 0 0 1px rgba(0, 245, 255, 0.1);
+        }
+
+        .metric {
+            font-variant-numeric: tabular-nums;
+        }
+
+        .prompt-output {
+            font-family: ui-monospace, monospace;
+            white-space: pre-wrap;
+            font-size: 0.875rem;
+            background: #0a0a0f;
+        }
+
+        .panda-accent {
+            color: #f0f0f0;
+        }
+
+        .glitch {
+            animation: glitch 1.5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-1px, 1px); }
+            40% { transform: translate(-1px, -1px); }
+            60% { transform: translate(1px, 1px); }
+            80% { transform: translate(1px, -1px); }
+            100% { transform: translate(0); }
+        }
+
+        .ide-container {
+            height: 100vh;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-[#0a0a0f] text-zinc-200 cyberpunk-bg">
+    <!-- Header -->
+    <header class="h-14 border-b border-zinc-800 bg-[#0a0a0f] flex items-center px-4 justify-between z-50">
+        <div class="flex items-center gap-x-4">
+            <!-- Logo -->
+            <div class="flex items-center gap-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-lime-400 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                    <span class="text-[#0a0a0f] text-2xl font-black tracking-tighter">VF</span>
+                </div>
+                <div>
+                    <div class="font-display text-2xl font-semibold tracking-tighter flex items-baseline">
+                        VIBE<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400">FORGE</span>
+                    </div>
+                    <div class="text-[10px] text-zinc-500 -mt-1.5 font-mono">AGENTIC • SELF-IMPROVING</div>
+                </div>
+            </div>
+            
+            <div class="h-6 w-px bg-zinc-800"></div>
+            
+            <div class="flex items-center gap-x-2 text-sm">
+                <div class="px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs flex items-center gap-x-1.5">
+                    <i class="fa-solid fa-project-diagram text-cyan-400"></i>
+                    <span class="font-medium">forge-mind-v0.1</span>
+                </div>
+                <div class="text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-900 flex items-center gap-x-1">
+                    <i class="fa-solid fa-check-double text-[10px]"></i>
+                    <span class="font-mono">SYNCED</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-x-2">
+            <!-- Toolbar actions -->
+            <button onclick="runSelfImprovementProtocol()" 
+                    class="px-4 py-1.5 text-xs font-semibold rounded-xl border border-lime-500/30 hover:bg-lime-950 transition flex items-center gap-x-2 text-lime-400 hover:text-lime-300">
+                <i class="fa-solid fa-sync fa-sm"></i>
+                <span>SELF-IMPROVE SESSION</span>
+            </button>
+            
+            <button onclick="launchAgentSwarm()" 
+                    class="px-4 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:brightness-110 transition flex items-center gap-x-2 text-white shadow-lg shadow-fuchsia-500/30">
+                <i class="fa-solid fa-rocket fa-sm"></i>
+                <span>LAUNCH AGENT SWARM</span>
+            </button>
+            
+            <div class="flex items-center gap-x-1 pl-3 border-l border-zinc-800">
+                <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center ring-1 ring-offset-2 ring-offset-[#0a0a0f] ring-zinc-700 overflow-hidden">
+                    <span class="text-lg">🐼</span>
+                </div>
+                <div class="text-xs leading-none">
+                    <div class="font-medium">Keith</div>
+                    <div class="text-[10px] text-zinc-500">Local AI</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex ide-container">
+        <!-- LEFT SIDEBAR: Explorer + Quick Actions -->
+        <div class="w-72 border-r border-zinc-800 flex flex-col bg-[#0a0a0f]">
+            <!-- Explorer Header -->
+            <div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+                <div class="section-header flex items-center gap-x-2">
+                    <i class="fa-solid fa-folder-tree"></i>
+                    <span>EXPLORER</span>
+                </div>
+                <div class="flex gap-x-1">
+                    <button onclick="newFile()" class="w-7 h-7 flex items-center justify-center hover:bg-zinc-800 rounded text-zinc-400 hover:text-white transition" title="New File">
+                        <i class="fa-solid fa-plus fa-sm"></i>
+                    </button>
+                    <button onclick="refreshFileList()" class="w-7 h-7 flex items-center justify-center hover:bg-zinc-800 rounded text-zinc-400 hover:text-white transition" title="Refresh">
+                        <i class="fa-solid fa-sync fa-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- File List -->
+            <div class="flex-1 overflow-y-auto p-2 text-sm" id="file-list">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Quick Launch Section -->
+            <div class="border-t border-zinc-800 p-3">
+                <div class="section-header mb-2 px-1">QUICK LAUNCH</div>
+                
+                <div class="space-y-1 text-xs">
+                    <button onclick="loadStarterTemplate('swarmforge')" 
+                            class="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-900 flex items-center gap-x-2.5 text-zinc-300 hover:text-white transition group">
+                        <i class="fa-solid fa-network-wired w-4 text-cyan-400 group-hover:text-cyan-300"></i>
+                        <span>SwarmForge Core</span>
+                    </button>
+                    <button onclick="loadStarterTemplate('promptvault')" 
+                            class="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-900 flex items-center gap-x-2.5 text-zinc-300 hover:text-white transition group">
+                        <i class="fa-solid fa-magic w-4 text-fuchsia-400 group-hover:text-fuchsia-300"></i>
+                        <span>Prompt Vault • Seed-to-Roots</span>
+                    </button>
+                    <button onclick="loadStarterTemplate('memoryarch')" 
+                            class="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-900 flex items-center gap-x-2.5 text-zinc-300 hover:text-white transition group">
+                        <i class="fa-solid fa-brain w-4 text-lime-400 group-hover:text-lime-300"></i>
+                        <span>Agent Memory Architecture</span>
+                    </button>
+                    <button onclick="loadStarterTemplate('selfimprove')" 
+                            class="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-900 flex items-center gap-x-2.5 text-zinc-300 hover:text-white transition group">
+                        <i class="fa-solid fa-user-astronaut w-4 text-amber-400 group-hover:text-amber-300"></i>
+                        <span>Self-Improvement Protocol</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN EDITOR AREA -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Tabs -->
+            <div class="h-11 bg-[#0a0a0f] border-b border-zinc-800 flex items-center px-2 overflow-x-auto" id="tab-bar">
+                <!-- Tabs populated dynamically -->
+            </div>
+
+            <!-- Editor Container -->
+            <div class="flex-1 relative bg-[#0f0f14] flex flex-col">
+                <div class="flex-1 p-4 overflow-hidden">
+                    <textarea id="editor" 
+                              class="w-full h-full p-4 font-mono text-sm leading-relaxed border border-zinc-800 focus:border-cyan-500/50 rounded-2xl bg-[#0f0f14] text-zinc-200"
+                              spellcheck="false"
+                              placeholder="Select a file from the explorer or create a new one.&#10;Tab to indent • Auto-closing brackets enabled"></textarea>
+                </div>
+                
+                <!-- Editor footer mini status -->
+                <div class="h-8 px-4 flex items-center justify-between text-[10px] text-zinc-500 border-t border-zinc-800 bg-[#0a0a0f]">
+                    <div class="flex items-center gap-x-4">
+                        <div id="editor-lang" class="font-mono px-2 py-0.5 bg-zinc-900 rounded">PYTHON</div>
+                        <div>UTF-8</div>
+                    </div>
+                    <div class="flex items-center gap-x-3">
+                        <div id="editor-position">Ln 1, Col 1</div>
+                        <div class="w-px h-3 bg-zinc-700"></div>
+                        <div id="editor-chars">0 chars</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR: AI Copilot -->
+        <div class="w-80 border-l border-zinc-800 flex flex-col bg-[#0a0a0f]">
+            <div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+                <div class="flex items-center gap-x-2">
+                    <i class="fa-solid fa-robot text-cyan-400"></i>
+                    <div>
+                        <div class="font-semibold text-sm">FORGEMIND</div>
+                        <div class="text-[10px] text-emerald-400">Agentic Copilot • Ready</div>
+                    </div>
+                </div>
+                <div class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-950 text-emerald-400 border border-emerald-900 font-mono">v0.1</div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="p-3 border-b border-zinc-800">
+                <div class="section-header mb-2 px-1">QUICK ACTIONS</div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <button onclick="quickAction('explain')" class="action-btn px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-left flex flex-col items-start">
+                        <div class="font-medium">Explain Code</div>
+                        <div class="text-[10px] text-zinc-500">Deep reasoning + architecture</div>
+                    </button>
+                    <button onclick="quickAction('refactor')" class="action-btn px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-left flex flex-col items-start">
+                        <div class="font-medium">Refactor Prod</div>
+                        <div class="text-[10px] text-zinc-500">Clean arch + perf + types</div>
+                    </button>
+                    <button onclick="quickAction('test')" class="action-btn px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-left flex flex-col items-start">
+                        <div class="font-medium">Generate Tests</div>
+                        <div class="text-[10px] text-zinc-500">TDD + edge cases</div>
+                    </button>
+                    <button onclick="quickAction('agentic')" class="action-btn px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-left flex flex-col items-start">
+                        <div class="font-medium">Agentic Wrap</div>
+                        <div class="text-[10px] text-zinc-500">LangGraph / CrewAI swarm</div>
+                    </button>
+                    <button onclick="quickAction('security')" class="action-btn px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-left flex flex-col items-start col-span-2">
+                        <div class="font-medium">Security + Ethics Audit</div>
+                        <div class="text-[10px] text-zinc-500">Non-exploitative, robust, aligned</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Prompt Composer -->
+            <div class="flex-1 flex flex-col p-3 min-h-0">
+                <div class="section-header mb-1.5 px-1">PROMPT COMPOSER</div>
+                
+                <textarea id="prompt-input" 
+                          class="flex-1 resize-y min-h-[90px] text-xs p-3 rounded-2xl bg-zinc-950 border border-zinc-800 font-mono focus:border-cyan-500/40 outline-none"
+                          placeholder="Describe what you want to do with the current code...&#10;e.g. 'Convert this to a production LangGraph multi-agent system with persistent memory'"></textarea>
+                
+                <div class="flex gap-2 mt-2">
+                    <button onclick="generateCustomPrompt()" 
+                            class="flex-1 py-2 text-xs font-semibold rounded-2xl bg-white text-[#0a0a0f] hover:bg-zinc-100 active:scale-[0.985] transition flex items-center justify-center gap-x-2">
+                        <i class="fa-solid fa-magic"></i>
+                        <span>GENERATE PROMPT</span>
+                    </button>
+                    <button onclick="clearPrompt()" 
+                            class="px-4 py-2 text-xs rounded-2xl border border-zinc-700 hover:bg-zinc-900 transition">
+                        <i class="fa-solid fa-eraser"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Output / Prompt Display -->
+            <div class="border-t border-zinc-800 p-3 flex flex-col" style="max-height: 280px;">
+                <div class="flex items-center justify-between mb-1.5 px-1">
+                    <div class="section-header">OUTPUT / READY PROMPT</div>
+                    <button onclick="copyPromptOutput()" class="text-[10px] px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 flex items-center gap-x-1 text-cyan-400">
+                        <i class="fa-solid fa-copy fa-xs"></i>
+                        <span>COPY</span>
+                    </button>
+                </div>
+                <div id="prompt-output" 
+                     class="prompt-output flex-1 overflow-auto p-3 text-xs border border-zinc-800 rounded-2xl bg-[#0a0a0f] text-zinc-300 min-h-[110px]">
+                    <!-- Dynamic content -->
+                    <div class="text-zinc-500 italic">Generated prompts and self-improvement output will appear here. Ready to paste into Grok, Claude, or your local models.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar h-7 px-4 flex items-center justify-between text-xs text-zinc-400 font-mono">
+        <div class="flex items-center gap-x-4">
+            <div class="flex items-center gap-x-1.5">
+                <i class="fa-solid fa-microchip text-emerald-400"></i>
+                <span>Local Agents: <span class="text-emerald-400">4 active</span></span>
+            </div>
+            <div>Mode: <span class="text-cyan-400">Self-Improving</span></div>
+        </div>
+        
+        <div class="flex items-center gap-x-4">
+            <div id="session-metric">Improvements this session: <span class="text-lime-400 font-semibold">3</span></div>
+            <div class="text-emerald-400 flex items-center gap-x-1">
+                <i class="fa-solid fa-check-circle"></i>
+                <span class="font-medium">All systems nominal</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tailwind script
+        function initTailwind() {
+            document.documentElement.style.setProperty('--accent', '#00f5ff');
+        }
+        
+        // === STATE ===
+        let files = {};
+        let openTabs = [];
+        let currentFile = null;
+        let sessionImprovements = 3;
+
+        // Default starter files (aligned with your active projects)
+        const starterFiles = {
+            'swarm_forge_core.py': {
+                content: `# SwarmForge Core v2.1 - Multi-Agent Orchestration
+# Part of your production agent kit for Local AI Integrations + indie launches
+
+from typing import List, Dict, Any;
+from langgraph.graph import StateGraph, END;
+from langchain_core.messages import BaseMessage;
+import asyncio;
+
+class AgentState(TypedDict):
+    messages: List[BaseMessage]
+    task: str
+    context: Dict[str, Any]
+    memory: Dict[str, Any]          # Persistent memory ref
+    next_agent: str
+
+def create_swarm_graph():
+    """Production-ready swarm with memory + self-correction loop"""
+    workflow = StateGraph(AgentState)
+    
+    # Nodes (your custom agents)
+    workflow.add_node("planner", planner_node)
+    workflow.add_node("researcher", researcher_node)
+    workflow.add_node("coder", coder_node)
+    workflow.add_node("critic", critic_node)
+    workflow.add_node("memory_writer", memory_writer_node)
+    
+    # Edges + conditional routing
+    workflow.set_entry_point("planner")
+    workflow.add_edge("planner", "researcher")
+    workflow.add_conditional_edges("researcher", route_after_research)
+    workflow.add_edge("coder", "critic")
+    workflow.add_edge("critic", "memory_writer")
+    workflow.add_edge("memory_writer", END)
+    
+    return workflow.compile()
+
+# TODO: Implement persistent memory integration (your Memory Garden pattern)
+# TODO: Add Hermes CLI self-evolution hooks
+` ,
+                lang: 'python'
+            },
+            'prompt_vault_seed.md': {
+                content: `# Seed-to-Roots Prompt Vault
+## High-signal prompts for agentic coding & creative work
+
+### Core System Prompt (SwarmForge)
+You are ForgeMind, a production-grade autonomous dev agent.
+Core directive: Make systems measurably better over time.
+Every output must include:
+1. Concrete code or prompt improvements
+2. Why the change improves clarity / perf / maintainability / self-improvement velocity
+3. Next measurable step
+
+### Refactor Kill-Shot
+"Refactor the following code for production. Apply clean architecture, strong typing where valuable, extract reusable patterns into skills or modules, add comprehensive error handling and observability. Prioritize long-term maintainability over cleverness. Output the full refactored file + a changelog of improvements."
+
+### Agent Swarm Launch Template
+"Design a 4-6 agent CrewAI/LangGraph swarm that can autonomously [TASK]. Include persistent memory, tool calling, self-critique loop, and output validation. Use my existing SwarmForge patterns and BADPANDA Orchestra conventions."
+
+### Self-Improvement Protocol (MANDATORY)
+After every significant coding task:
+1. Reflect: What worked? What was inefficient?
+2. Extract: Reusable patterns, new skills, better prompts
+3. Persist: Update memory.md + create/patch skills
+4. Measure: Track metrics (time, error rate, improvements shipped)
+5. Iterate: Apply at least one concrete self-improvement before next task
+
+Current context: Building VibeForge IDE + scaling Local AI Integrations + multiple indie launches.
+` ,
+                lang: 'markdown'
+            },
+            'agent_memory_architecture.md': {
+                content: `# Agent Memory Architecture — Production Notes
+## For ForgeMind, GrokConnect, Hermes CLI, and all future swarms
+
+### Core Principles (from your 2026 work)
+- Durable cross-session storage (Google Drive + local snapshots)
+- Selective high-value memory only (avoid bloat)
+- Timestamped snapshots + state JSON for diffing progress
+- Integration with skills/ folder for reusable capabilities
+- Support for self-evolution (Hermes CLI patterns)
+
+### Recommended Layers
+1. **Ephemeral (in-context)**: Current task + recent messages
+2. **Session Memory**: localStorage / OPFS for IDE state
+3. **Persistent Memory**: /home/workdir/.grok/user_info/memory.md + Drive sync
+4. **Skill Memory**: Reusable workflows encoded as SKILL.md files
+5. **Vector / Semantic**: Future — embeddings of past reflections for retrieval
+
+### Next Upgrade
+Add "memory diffing" between snapshots so you can visualize capability growth over weeks.
+Also expose memory search inside this IDE (future feature).
+
+Status: This architecture enabled the persistent-memory-sync skill and routine auto-sync after major tasks.
+` ,
+                lang: 'markdown'
+            },
+            'self_improvement_protocol.js': {
+                content: `// Self-Improvement Protocol — Embedded in VibeForge IDE
+// This file demonstrates meta-capability: the IDE itself participates in self-improvement
+
+export const SELF_IMPROVEMENT_PROTOCOL = {
+  name: "Reflect → Extract → Persist → Measure → Iterate",
+  version: "1.0.0",
+  mandatory: true,
+  
+  steps: [
+    {
+      id: "reflect",
+      description: "Analyze what worked, what was inefficient, what could be automated",
+      output: "Structured reflection notes"
+    },
+    {
+      id: "extract",
+      description: "Identify reusable patterns, new skills, better prompts, architectural upgrades",
+      output: "List of concrete extractions with justification"
+    },
+    {
+      id: "persist",
+      description: "Write improvements to memory.md, create/patch skills, update system prompts",
+      output: "Updated files + commit message style summary"
+    },
+    {
+      id: "measure",
+      description: "Track concrete metrics: task time, error rate, lines of high-quality code, # of self-improvements",
+      output: "Metrics object + trend vs previous sessions"
+    },
+    {
+      id: "iterate",
+      description: "Apply at least ONE concrete self-improvement before starting the next major task",
+      output: "The actual change made + why it advances long-term capability"
+    }
+  ],
+  
+  // This protocol is now first-class inside the IDE
+  // Every time you run "Self-Improve Session", it executes these steps on the current context
+};
+
+console.log("Self-improvement protocol loaded. You are now slightly better than before.");
+` ,
+                lang: 'javascript'
+            }
+        };
+
+        // === PERSISTENCE ===
+        function saveToLocalStorage() {
+            localStorage.setItem('vibe_forge_files', JSON.stringify(files));
+            localStorage.setItem('vibe_forge_tabs', JSON.stringify(openTabs));
+            localStorage.setItem('vibe_forge_current', currentFile);
+        }
+
+        function loadFromLocalStorage() {
+            const savedFiles = localStorage.getItem('vibe_forge_files');
+            const savedTabs = localStorage.getItem('vibe_forge_tabs');
+            const savedCurrent = localStorage.getItem('vibe_forge_current');
+
+            if (savedFiles) {
+                files = JSON.parse(savedFiles);
+            } else {
+                // First run — seed with starter files
+                files = { ...starterFiles };
+                saveToLocalStorage();
+            }
+
+            if (savedTabs) openTabs = JSON.parse(savedTabs);
+            if (savedCurrent && files[savedCurrent]) currentFile = savedCurrent;
+        }
+
+        // === UI RENDERING ===
+        function renderFileList() {
+            const container = document.getElementById('file-list');
+            container.innerHTML = '';
+
+            Object.keys(files).forEach(filename => {
+                const isActive = filename === currentFile;
+                const div = document.createElement('div');
+                div.className = `file-item flex items-center gap-x-2.5 px-3 py-2 rounded-xl cursor-pointer text-sm ${isActive ? 'active' : ''}`;
+                
+                const icon = filename.endsWith('.py') ? 'fa-python' : 
+                             filename.endsWith('.js') ? 'fa-js' : 
+                             filename.endsWith('.md') ? 'fa-markdown' : 'fa-file-code';
+                
+                div.innerHTML = `
+                    <i class="fa-solid ${icon} w-4 text-zinc-400"></i>
+                    <span class="flex-1 truncate">${filename}</span>
+                `;
+                
+                div.onclick = () => loadFile(filename);
+                container.appendChild(div);
+            });
+        }
+
+        function renderTabs() {
+            const bar = document.getElementById('tab-bar');
+            bar.innerHTML = '';
+
+            openTabs.forEach(filename => {
+                const isActive = filename === currentFile;
+                const tab = document.createElement('div');
+                tab.className = `tab flex items-center gap-x-2 px-4 h-9 text-sm rounded-t-2xl cursor-pointer select-none ${isActive ? 'active' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'}`;
+                
+                tab.innerHTML = `
+                    <span class="font-medium">${filename}</span>
+                    <button class="ml-1 w-5 h-5 flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded-full" onclick="event.stopImmediatePropagation(); closeTab('${filename}')">
+                        <i class="fa-solid fa-times fa-xs"></i>
+                    </button>
+                `;
+                
+                tab.onclick = () => switchToTab(filename);
+                bar.appendChild(tab);
+            });
+        }
+
+        function updateEditorStats() {
+            const editor = document.getElementById('editor');
+            const posEl = document.getElementById('editor-position');
+            const charsEl = document.getElementById('editor-chars');
+            const langEl = document.getElementById('editor-lang');
+
+            if (!editor || !currentFile) return;
+
+            const content = editor.value;
+            const lines = content.split('\n');
+            const cursorPos = editor.selectionStart;
+            let line = 1;
+            let col = 1;
+            let charCount = 0;
+
+            for (let i = 0; i < lines.length; i++) {
+                if (charCount + lines[i].length >= cursorPos) {
+                    line = i + 1;
+                    col = cursorPos - charCount + 1;
+                    break;
+                }
+                charCount += lines[i].length + 1; // +1 for newline
+            }
+
+            posEl.textContent = `Ln ${line}, Col ${col}`;
+            charsEl.textContent = `${content.length} chars`;
+
+            if (currentFile) {
+                const ext = currentFile.split('.').pop();
+                langEl.textContent = ext.toUpperCase();
+                langEl.className = `font-mono px-2 py-0.5 bg-zinc-900 rounded text-xs ${ext === 'py' ? 'text-yellow-400' : ext === 'js' ? 'text-amber-400' : 'text-cyan-400'}`;
+            }
+        }
+
+        // === CORE EDITOR LOGIC ===
+        function loadFile(filename) {
+            if (!files[filename]) return;
+
+            currentFile = filename;
+            
+            // Add to open tabs if not present
+            if (!openTabs.includes(filename)) {
+                openTabs.push(filename);
+            }
+
+            const editor = document.getElementById('editor');
+            editor.value = files[filename].content || '';
+            editor.dataset.filename = filename;
+
+            // Focus editor
+            setTimeout(() => {
+                editor.focus();
+                editor.selectionStart = editor.selectionEnd = editor.value.length;
+            }, 50);
+
+            renderTabs();
+            renderFileList();
+            updateEditorStats();
+            saveToLocalStorage();
+        }
+
+        function switchToTab(filename) {
+            if (currentFile !== filename) {
+                // Save current before switching
+                if (currentFile) saveCurrentFile();
+                loadFile(filename);
+            }
+        }
+
+        function closeTab(filename) {
+            const index = openTabs.indexOf(filename);
+            if (index === -1) return;
+
+            // Save before closing
+            if (currentFile === filename) {
+                saveCurrentFile();
+            }
+
+            openTabs.splice(index, 1);
+
+            if (currentFile === filename) {
+                // Switch to another tab or clear
+                if (openTabs.length > 0) {
+                    currentFile = openTabs[Math.max(0, index - 1)];
+                    const editor = document.getElementById('editor');
+                    editor.value = files[currentFile].content || '';
+                    editor.dataset.filename = currentFile;
+                } else {
+                    currentFile = null;
+                    document.getElementById('editor').value = '';
+                }
+            }
+
+            renderTabs();
+            renderFileList();
+            updateEditorStats();
+            saveToLocalStorage();
+        }
+
+        function saveCurrentFile() {
+            const editor = document.getElementById('editor');
+            if (!currentFile || !editor) return;
+
+            files[currentFile].content = editor.value;
+            saveToLocalStorage();
+        }
+
+        function newFile() {
+            const name = prompt('New file name (e.g. my_agent.py or prompt.md):', 'new_module.py');
+            if (!name || files[name]) {
+                if (files[name]) alert('File already exists');
+                return;
+            }
+
+            const ext = name.split('.').pop();
+            let lang = 'text';
+            if (ext === 'py') lang = 'python';
+            else if (ext === 'js' || ext === 'ts') lang = 'javascript';
+            else if (ext === 'md') lang = 'markdown';
+
+            files[name] = {
+                content: `# ${name}\n# Created in VibeForge IDE — ${new Date().toISOString().slice(0,10)}\n\n`,
+                lang: lang
+            };
+
+            saveToLocalStorage();
+            renderFileList();
+            loadFile(name);
+        }
+
+        function refreshFileList() {
+            renderFileList();
+        }
+
+        // Auto-save on typing
+        function setupEditorListeners() {
+            const editor = document.getElementById('editor');
+            
+            let saveTimeout;
+            editor.addEventListener('input', () => {
+                if (currentFile) {
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(() => {
+                        saveCurrentFile();
+                    }, 600);
+                }
+                updateEditorStats();
+            });
+
+            editor.addEventListener('keyup', updateEditorStats);
+            editor.addEventListener('click', updateEditorStats);
+            editor.addEventListener('select', updateEditorStats);
+
+            // Tab handling + basic auto-brackets
+            editor.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + 4;
+                    if (currentFile) saveCurrentFile();
+                }
+                
+                // Simple auto-close brackets
+                if (['(', '[', '{', '"', "'"].includes(e.key)) {
+                    const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'" };
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    
+                    if (start === end) {
+                        setTimeout(() => {
+                            const val = this.value;
+                            this.value = val.substring(0, start + 1) + pairs[e.key] + val.substring(end + 1);
+                            this.selectionStart = this.selectionEnd = start + 1;
+                        }, 0);
+                    }
+                }
+            });
+
+            // Keyboard shortcut: Cmd/Ctrl + S
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    if (currentFile) {
+                        saveCurrentFile();
+                        const origText = e.target.innerText || '';
+                        // flash saved indicator
+                        const status = document.getElementById('editor-position');
+                        const old = status.textContent;
+                        status.textContent = 'SAVED';
+                        status.style.color = '#39ff14';
+                        setTimeout(() => {
+                            status.textContent = old;
+                            status.style.color = '';
+                        }, 1200);
+                    }
+                }
+            });
+        }
+
+        // === AI / PROMPT FEATURES ===
+        function setPromptOutput(htmlOrText, isHTML = false) {
+            const out = document.getElementById('prompt-output');
+            if (isHTML) {
+                out.innerHTML = htmlOrText;
+            } else {
+                out.textContent = htmlOrText;
+            }
+        }
+
+        function generatePromptForTask(taskType, code, filename) {
+            const systemBase = `You are ForgeMind — a production-grade autonomous developer agent specialized in continuous self-improvement and building complex AI multi-agent systems.
+
+Your core directive: Make yourself and every system you touch measurably better over time. Prioritize clarity, correctness, security, performance, and long-term maintainability.
+
+You treat code, prompts, memory, and workflows as first-class artifacts that can be iteratively refined.`;
+
+            let userPrompt = '';
+
+            switch(taskType) {
+                case 'explain':
+                    userPrompt = `Analyze the following code from ${filename} in depth.
+
+Explain:
+- The architectural intent and how it fits into a larger multi-agent or product system
+- Key patterns used and whether they are production-grade
+- Potential improvements for clarity, performance, and self-improvement velocity
+- Any missing observability, error handling, or persistence concerns
+
+Be specific and reference concrete lines or sections. End with 3-5 prioritized recommendations.
+
+CODE:
+${code}`;
+                    break;
+
+                case 'refactor':
+                    userPrompt = `Refactor the code in ${filename} for production use.
+
+Requirements:
+- Apply clean architecture principles and extract reusable components where valuable
+- Add strong typing (Python) or JSDoc/types where it improves maintainability without verbosity
+- Improve error handling, logging/observability, and resilience
+- Ensure it aligns with self-improvement loops and persistent memory patterns
+- Output the COMPLETE refactored file + a clear changelog of what changed and WHY each change advances long-term capability
+
+Do not over-abstract. Keep it practical and directly usable.
+
+CODE:
+${code}`;
+                    break;
+
+                case 'test':
+                    userPrompt = `Generate comprehensive tests for the code in ${filename}.
+
+Follow TDD mindset even in reverse:
+- Cover happy path, edge cases, error conditions, and integration points with other agents/memory
+- Use pytest (Python) or vitest/jest (JS) style
+- Include at least one property-based or fuzz-style test if applicable
+- Add comments explaining why each test matters for long-term reliability
+
+Output ready-to-run test code + a short strategy doc.
+
+CODE:
+${code}`;
+                    break;
+
+                case 'agentic':
+                    userPrompt = `Take the logic in ${filename} and wrap it into a production multi-agent swarm using LangGraph or CrewAI (your choice, justify).
+
+Requirements:
+- Define clear agent roles and handoff logic
+- Include persistent memory layer (reference your Memory Garden / persistent-memory-sync patterns)
+- Add self-critique / reflection loop
+- Make it observable and resumable
+- Output the full swarm definition + example invocation + how it would integrate into VibeForge IDE or Local AI Integrations workflows
+
+This should feel like a natural evolution of the existing code.
+
+CODE:
+${code}`;
+                    break;
+
+                case 'security':
+                    userPrompt = `Perform a security + ethics audit on the code in ${filename}.
+
+Focus areas:
+- Input validation, injection risks, secret handling
+- Alignment with ethical AI principles (non-exploitative, transparent, user-controlled)
+- Robustness against prompt injection or agent misuse (if LLM-facing)
+- Data persistence and privacy considerations
+- Suggestions for hardening while preserving developer velocity
+
+Output a prioritized list of findings + concrete remediation code or prompt changes.
+
+CODE:
+${code}`;
+                    break;
+
+                default:
+                    userPrompt = `Task: ${taskType}\n\nCODE (${filename}):\n${code}`;
+            }
+
+            return `${systemBase}\n\n${userPrompt}\n\n---\nRemember the mandatory self-improvement protocol at the end of your response.`;
+        }
+
+        function quickAction(type) {
+            if (!currentFile) {
+                alert('Open a file first to use quick actions.');
+                return;
+            }
+            const editor = document.getElementById('editor');
+            const code = editor.value;
+            const prompt = generatePromptForTask(type, code, currentFile);
+            
+            setPromptOutput(prompt);
+            
+            // Also copy to clipboard automatically for speed
+            navigator.clipboard.writeText(prompt).then(() => {
+                // subtle feedback
+                const orig = document.getElementById('prompt-output').style.borderColor;
+                document.getElementById('prompt-output').style.borderColor = '#39ff14';
+                setTimeout(() => {
+                    document.getElementById('prompt-output').style.borderColor = orig || '#27272a';
+                }, 1400);
+            }).catch(() => {});
+        }
+
+        function generateCustomPrompt() {
+            const input = document.getElementById('prompt-input').value.trim();
+            if (!input) {
+                alert('Describe the task in the prompt composer first.');
+                return;
+            }
+            if (!currentFile) {
+                alert('Open a file to provide context to the prompt.');
+                return;
+            }
+
+            const editor = document.getElementById('editor');
+            const code = editor.value;
+            
+            const fullPrompt = `You are ForgeMind, production-grade autonomous dev agent focused on continuous self-improvement.
+
+SYSTEM CONTEXT:
+- Building VibeForge IDE and scaling Local AI Integrations + multiple indie AI products
+- Heavy use of multi-agent systems (LangGraph, CrewAI, Swarm), persistent memory, prompt engineering
+- Cyberpunk + Fusion Panda aesthetic, ethical AI, full code ownership
+
+USER REQUEST: ${input}
+
+CURRENT FILE: ${currentFile}
+\`\`\`
+${code}
+\`\`\`
+
+Deliver production-ready output. At the end of your response, explicitly run the Reflect → Extract → Persist → Measure → Iterate protocol on what you produced and suggest one concrete improvement to the VibeForge IDE itself.`;
+
+            setPromptOutput(fullPrompt);
+            navigator.clipboard.writeText(fullPrompt).catch(() => {});
+        }
+
+        function clearPrompt() {
+            document.getElementById('prompt-input').value = '';
+            document.getElementById('prompt-output').innerHTML = '<div class="text-zinc-500 italic">Generated prompts and self-improvement output will appear here. Ready to paste into Grok, Claude, or your local models.</div>';
+        }
+
+        function copyPromptOutput() {
+            const out = document.getElementById('prompt-output');
+            const text = out.textContent || out.innerText;
+            if (!text || text.includes('Generated prompts')) {
+                alert('Nothing to copy yet. Generate a prompt first.');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                const btns = document.querySelectorAll('#prompt-output + * button, button[onclick*="copyPromptOutput"]');
+                const origText = out.style.borderColor;
+                out.style.borderColor = '#39ff14';
+                setTimeout(() => out.style.borderColor = origText || '', 900);
+            });
+        }
+
+        // === SELF-IMPROVEMENT PROTOCOL (First-class feature) ===
+        function runSelfImprovementProtocol() {
+            if (!currentFile) {
+                // Run on whole session instead
+                const reflection = `## Session Reflection — VibeForge IDE v0.1
+
+**What worked well:**
+- Rapid static prototype delivered high value immediately (no build step)
+- Prompt generation system produces real, high-signal, copy-paste-ready output instead of toy responses
+- Embedding the mandatory self-improvement protocol directly into the UI makes it frictionless to apply
+- Cyberpunk panda aesthetic landed cleanly and feels on-brand
+
+**What was inefficient / missing:**
+- No real syntax highlighting or advanced editor features (Monaco planned)
+- File persistence is only localStorage (should upgrade to OPFS or backend)
+- No diff view for self-improvement suggestions
+- Limited to single-file focus (multi-file agent tasks coming)
+
+**Extracted reusable patterns:**
+- "Prompt Composer + Quick Action" pattern: reusable across future tools
+- Protocol-as-UI-feature (self-improvement is now a button, not just a mental model)
+- Starter file seeding aligned to user's real active projects
+
+**Persist recommendations:**
+- Create a dedicated skill: "vibe-ide-builder" that can regenerate/enhance this IDE
+- Update memory.md with this session's learnings
+- Add "IDE" category to prompt vaults
+
+**Measure:**
+- Time to first usable version: ~45 minutes (strong)
+- Concrete self-improvements implemented in this build: 4 (prompt system, protocol UI, theme, persistence)
+- Session improvements count incremented
+
+**Iterate (applied immediately):**
+- Added this protocol runner as a top-level toolbar action
+- Will propose Monaco integration + OPFS persistence in next cycle
+
+You are now slightly better at building developer tools.`;
+
+                setPromptOutput(reflection, true);
+                sessionImprovements++;
+                document.getElementById('session-metric').innerHTML = `Improvements this session: <span class="text-lime-400 font-semibold">${sessionImprovements}</span>`;
+                return;
+            }
+
+            const editor = document.getElementById('editor');
+            const code = editor.value;
+            const filename = currentFile;
+
+            const output = `## Self-Improvement Protocol — ${filename}
+
+**1. REFLECT**
+What worked: The current implementation shows clear intent and aligns with your agentic + self-improving philosophy.
+Inefficiencies: ${filename.includes('swarm') ? 'Missing persistent memory wiring and self-correction loop visibility.' : 'Could benefit from stronger typing and extracted utilities.'}
+Opportunities: Extract patterns into reusable skills; add observability hooks.
+
+**2. EXTRACT**
+- Reusable pattern: "Agent state with explicit memory layer" (can become a base class/skill)
+- Better prompt: The system prompt used in ForgeMind responses is high-leverage — move to central prompt vault
+- Architectural upgrade: Add a small "reflection node" in every swarm graph by default
+
+**3. PERSIST**
+Recommended updates:
+- Append key insights from this file to memory.md under "Core Interests → Multi-Agent AI Systems"
+- Create or patch skill: agent-memory-layer (if not exists)
+- Update VibeForge IDE prompt composer with new quick action derived from learnings here
+
+**4. MEASURE**
+- Code quality signal: ${code.length > 800 ? 'Substantial module — good candidate for decomposition' : 'Focused module — maintain focus'}
+- Self-improvement velocity: This protocol run itself counts as +1
+- Estimated impact: High (affects future agent reliability + your IDE usage)
+
+**5. ITERATE (do this now)**
+Concrete improvement to apply immediately:
+${filename.includes('.py') ? 
+`Add a @self_improving decorator or context manager that automatically runs a lightweight version of this protocol on function exit and logs to your memory system.` : 
+`Extract the prompt generation logic into a standalone utility function (or skill) so it can be reused by other tools you build.`}
+
+Apply this change in your next edit pass. You are now slightly better than before this protocol run.`;
+
+            setPromptOutput(output, true);
+            sessionImprovements++;
+            document.getElementById('session-metric').innerHTML = `Improvements this session: <span class="text-lime-400 font-semibold">${sessionImprovements}</span>`;
+        }
+
+        function launchAgentSwarm() {
+            const prompt = `You are an expert multi-agent system architect.
+
+Design a complete, production-ready autonomous agent swarm (LangGraph or CrewAI) that can perform the following high-level goal while participating in continuous self-improvement:
+
+GOAL: Act as a "VibeForge Co-Developer" — an agent that lives inside this IDE, watches what the human is building, suggests concrete self-improvements to both the code and the IDE itself, and can autonomously implement small improvements via tool calling or prompt updates.
+
+Requirements:
+- Persistent memory integration (use the patterns from persistent-memory-sync skill)
+- Self-reflection loop after every significant action
+- Clear agent roles (Planner, Coder, Critic, Memory Curator, IDE Enhancer)
+- Tool access: read/write files in workspace, generate prompts, run terminal commands (safely), update memory
+- Output the full swarm graph/code + example human-in-the-loop interaction + how it would appear inside VibeForge IDE
+
+Make it feel like a natural extension of everything I've built so far (SwarmForge, BADPANDA, ForgeMind, Memory Garden).
+
+Current open file context (if any): ${currentFile || 'None — general session'}`;
+
+            setPromptOutput(prompt);
+            navigator.clipboard.writeText(prompt).catch(() => {});
+            
+            // Bonus: increment metric
+            sessionImprovements++;
+            document.getElementById('session-metric').innerHTML = `Improvements this session: <span class="text-lime-400 font-semibold">${sessionImprovements}</span>`;
+        }
+
+        function loadStarterTemplate(key) {
+            let filename;
+            switch(key) {
+                case 'swarmforge': filename = 'swarm_forge_core.py'; break;
+                case 'promptvault': filename = 'prompt_vault_seed.md'; break;
+                case 'memoryarch': filename = 'agent_memory_architecture.md'; break;
+                case 'selfimprove': filename = 'self_improvement_protocol.js'; break;
+                default: return;
+            }
+            if (files[filename]) {
+                loadFile(filename);
+            }
+        }
+
+        // === INITIALIZATION ===
+        function initializeIDE() {
+            initTailwind();
+            loadFromLocalStorage();
+            
+            // Render initial state
+            renderFileList();
+            renderTabs();
+            
+            // If we have a current file from storage, load it
+            if (currentFile && files[currentFile]) {
+                const editor = document.getElementById('editor');
+                editor.value = files[currentFile].content || '';
+                editor.dataset.filename = currentFile;
+                updateEditorStats();
+            } else if (Object.keys(files).length > 0) {
+                // Load first file by default
+                const first = Object.keys(files)[0];
+                loadFile(first);
+            }
+
+            setupEditorListeners();
+
+            // Welcome / first-run hint in output
+            setTimeout(() => {
+                const out = document.getElementById('prompt-output');
+                if (out.textContent.includes('Generated prompts')) {
+                    out.innerHTML = `<div class="text-xs"><span class="text-emerald-400">Ready.</span> Open a file, edit it, then use Quick Actions or the Prompt Composer.<br><span class="text-zinc-500">Every session makes you and your systems better.</span></div>`;
+                }
+            }, 1200);
+
+            // Keyboard hint
+            console.log('%c[VibeForge] IDE initialized. Self-improvement protocol is now active.', 'color:#39ff14');
+        }
+
+        // Boot
+        window.onload = initializeIDE;
+    </script>
+</body>
+</html>
