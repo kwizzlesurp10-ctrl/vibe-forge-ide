@@ -1,12 +1,14 @@
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, HTTPException
 from pydantic import BaseModel
 from typing import List, Literal
 import asyncio
 import json
+import logging
 
 from packages.agent_core.langgraph_workflow import build_vibe_graph, AgentState
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 class GraphNode(BaseModel):
     id: str
@@ -22,26 +24,31 @@ async def run_graph(request: RunGraphRequest):
     """
     Execute the agent graph using real LangGraph + LLM.
     """
-    graph = build_vibe_graph()
-    results = []
+    try:
+        graph = build_vibe_graph()
+        results = []
 
-    for node in request.nodes:
-        state: AgentState = {
-            "node_id": node.id,
-            "output": "",
-            "reflection": "",
-            "status": "running"
-        }
-        result = await graph.ainvoke(state)
-        results.append({
-            "node_id": node.id,
-            "status": result.get("status", "success"),
-            "reflection": result.get("reflection", ""),
-            "improvement": "LLM-powered reflection applied"
-        })
-        await asyncio.sleep(0.2)
+        for node in request.nodes:
+            state: AgentState = {
+                "node_id": node.id,
+                "output": f"Input for {node.label}",
+                "reflection": "",
+                "status": "running"
+            }
+            result = await graph.ainvoke(state)
+            results.append({
+                "node_id": node.id,
+                "status": result.get("status", "success"),
+                "reflection": result.get("reflection", "No reflection generated"),
+                "improvement": "LLM-powered reflection applied"
+            })
+            await asyncio.sleep(0.15)
 
-    return {"status": "completed", "results": results}
+        return {"status": "completed", "results": results}
+
+    except Exception as e:
+        logger.exception("LangGraph execution failed")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.websocket("/ws")
@@ -61,5 +68,6 @@ async def execution_ws(websocket: WebSocket):
                     "progress": 50 if status == "running" else 100
                 })
                 await asyncio.sleep(0.6)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"WebSocket error: {e}")
         await websocket.close()
