@@ -1,16 +1,15 @@
 import { create } from 'zustand';
-import { Node, Edge, Connection, addEdge } from 'reactflow';
+import { Node, Edge, Connection, addEdge, applyNodeChanges, applyEdgeChanges, NodeChange, EdgeChange } from 'reactflow';
 import { AgentNodeData } from '@/components/flow/AgentNode';
 
 interface GraphState {
   nodes: Node<AgentNodeData>[];
   edges: Edge[];
-  setNodes: (nodes: Node<AgentNodeData>[]) => void;
-  setEdges: (edges: Edge[]) => void;
+  onNodesChange: (changes: NodeChange[]) => void;
+  onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
   addNode: (type: AgentNodeData['type']) => void;
   deleteNode: (id: string) => void;
-  updateNodeData: (id: string, data: Partial<AgentNodeData>) => void;
 }
 
 let nodeId = 10;
@@ -26,8 +25,17 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     { id: 'e2-3', source: '2', target: '3', animated: true },
   ],
 
-  setNodes: (nodes) => set({ nodes }),
-  setEdges: (edges) => set({ edges }),
+  onNodesChange: (changes) => {
+    set({
+      nodes: applyNodeChanges(changes, get().nodes) as Node<AgentNodeData>[],
+    });
+  },
+
+  onEdgesChange: (changes) => {
+    set({
+      edges: applyEdgeChanges(changes, get().edges),
+    });
+  },
 
   onConnect: (connection) =>
     set((state) => ({
@@ -51,12 +59,5 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     set((state) => ({
       nodes: state.nodes.filter((n) => n.id !== id),
       edges: state.edges.filter((e) => e.source !== id && e.target !== id),
-    })),
-
-  updateNodeData: (id, newData) =>
-    set((state) => ({
-      nodes: state.nodes.map((node) =>
-        node.id === id ? { ...node, data: { ...node.data, ...newData } } : node
-      ),
     })),
 }));

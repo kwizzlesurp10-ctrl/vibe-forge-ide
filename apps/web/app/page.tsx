@@ -13,7 +13,7 @@ const AgentGraph = dynamic(() => import('@/components/flow/AgentGraph'), {
 });
 
 export default function VibeForgeIDE() {
-  const { nodes, edges, setNodes, setEdges, onConnect, addNode } = useGraphStore();
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode } = useGraphStore();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -39,7 +39,6 @@ export default function VibeForgeIDE() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
         <div className="w-72 border-r border-[var(--border-subtle)] bg-[var(--bg-panel)] flex flex-col">
           <NodePalette onAddNode={addNode} />
 
@@ -53,7 +52,6 @@ export default function VibeForgeIDE() {
           </div>
         </div>
 
-        {/* Main Canvas */}
         <div className="flex-1 flex flex-col">
           <div className="h-12 border-b border-[var(--border-subtle)] bg-[var(--bg-panel)] flex items-center px-4 text-sm justify-between">
             <div className="flex items-center gap-2">
@@ -67,14 +65,13 @@ export default function VibeForgeIDE() {
             <AgentGraph
               nodes={nodes}
               edges={edges}
-              onNodesChange={setNodes}
-              onEdgesChange={setEdges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
               onConnect={onConnect}
             />
           </div>
         </div>
 
-        {/* Right Sidebar - Inspector + Self-Improvement */}
         <div className="w-80 border-l border-[var(--border-subtle)] bg-[var(--bg-panel)] flex flex-col">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <div className="section-header mb-1">Inspector</div>
