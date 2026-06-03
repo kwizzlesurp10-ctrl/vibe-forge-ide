@@ -1,48 +1,19 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import dynamic from 'next/dynamic';
 import { Play, RotateCw } from 'lucide-react';
-import { Node, Edge, addEdge, Connection } from 'reactflow';
-import { AgentNodeData } from '@/components/flow/AgentNode';
 import NodePalette from '@/components/flow/NodePalette';
+import SelfImprovementPanel from '@/components/SelfImprovementPanel';
+import { useGraphStore } from '@/lib/store/graphStore';
 
 const AgentGraph = dynamic(() => import('@/components/flow/AgentGraph'), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full text-zinc-500">Loading node editor...</div>,
 });
 
-let nodeIdCounter = 4;
-
 export default function VibeForgeIDE() {
-  const [nodes, setNodes] = useState<Node<AgentNodeData>[]>([
-    { id: '1', type: 'agent', position: { x: 150, y: 100 }, data: { label: 'System Prompt', type: 'prompt' } },
-    { id: '2', type: 'agent', position: { x: 420, y: 240 }, data: { label: 'Primary Agent', type: 'agent' } },
-    { id: '3', type: 'agent', position: { x: 280, y: 400 }, data: { label: 'Self-Reflection', type: 'reflection' } },
-  ]);
-
-  const [edges, setEdges] = useState<Edge[]>([
-    { id: 'e1-2', source: '1', target: '2', animated: true },
-    { id: 'e2-3', source: '2', target: '3', animated: true },
-  ]);
-
-  const onAddNode = useCallback((type: string) => {
-    const newNode: Node<AgentNodeData> = {
-      id: String(nodeIdCounter++),
-      type: 'agent',
-      position: { x: 300 + Math.random() * 200, y: 200 + Math.random() * 150 },
-      data: {
-        label: `${type.charAt(0).toUpperCase() + type.slice(1)} Node`,
-        type: type as AgentNodeData['type'],
-      },
-    };
-    setNodes((nds) => [...nds, newNode]);
-  }, []);
-
-  const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge({ ...connection, animated: true }, eds)),
-    []
-  );
+  const { nodes, edges, setNodes, setEdges, onConnect, addNode } = useGraphStore();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -68,8 +39,9 @@ export default function VibeForgeIDE() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
         <div className="w-72 border-r border-[var(--border-subtle)] bg-[var(--bg-panel)] flex flex-col">
-          <NodePalette onAddNode={onAddNode} />
+          <NodePalette onAddNode={addNode} />
 
           <div className="p-4 flex-1 overflow-auto text-sm space-y-1">
             <div className="section-header mb-2">Current Graph</div>
@@ -81,6 +53,7 @@ export default function VibeForgeIDE() {
           </div>
         </div>
 
+        {/* Main Canvas */}
         <div className="flex-1 flex flex-col">
           <div className="h-12 border-b border-[var(--border-subtle)] bg-[var(--bg-panel)] flex items-center px-4 text-sm justify-between">
             <div className="flex items-center gap-2">
@@ -101,10 +74,15 @@ export default function VibeForgeIDE() {
           </div>
         </div>
 
-        <div className="w-80 border-l border-[var(--border-subtle)] bg-[var(--bg-panel)] p-4 text-sm">
-          <div className="section-header mb-3">Inspector</div>
-          <div className="text-zinc-400 text-xs leading-relaxed">
-            Click nodes in the graph to inspect. Use the palette on the left to add new agent nodes.
+        {/* Right Sidebar - Inspector + Self-Improvement */}
+        <div className="w-80 border-l border-[var(--border-subtle)] bg-[var(--bg-panel)] flex flex-col">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <div className="section-header mb-1">Inspector</div>
+            <div className="text-xs text-zinc-400">Select nodes to inspect</div>
+          </div>
+
+          <div className="flex-1 overflow-auto">
+            <SelfImprovementPanel />
           </div>
         </div>
       </div>
