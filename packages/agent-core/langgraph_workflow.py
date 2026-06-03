@@ -1,31 +1,46 @@
 """
 Production LangGraph Workflow for VibeForge IDE
+With proper state passing and memory support.
 """
 
 from langgraph.graph import StateGraph, END
-from typing import TypedDict, Literal, Any
+from langgraph.checkpoint.memory import MemorySaver
+from typing import TypedDict, Literal, Annotated
 from .llm import generate_reflection
+import operator
 
 class AgentState(TypedDict):
     node_id: str
     output: str
     reflection: str
     status: Literal["idle", "running", "success", "error"]
+    history: Annotated[list[str], operator.add]   # Accumulates reflections
 
 
 async def prompt_node(state: AgentState):
-    return {"output": f"Prompt generated for {state['node_id']}", "status": "success"}
+    output = f"Prompt generated for {state['node_id']}"
+    return {
+        "output": output,
+        "status": "success",
+        "history": [f"Prompt: {output}"]
+    }
 
 
 async def agent_node(state: AgentState):
-    return {"output": f"Agent executed for {state['node_id']}", "status": "success"}
+    output = f"Agent executed for {state['node_id']}"
+    return {
+        "output": output,
+        "status": "success",
+        "history": [f"Agent: {output}"]
+    }
 
 
 async def reflection_node(state: AgentState):
     reflection = await generate_reflection(state.get("output", ""))
     return {
         "reflection": reflection,
-        "status": "success"
+        "status": "success",
+        "history": [f"Reflection: {reflection}"]
     }
 
 
@@ -41,4 +56,6 @@ def build_vibe_graph():
     workflow.add_edge("agent", "reflection")
     workflow.add_edge("reflection", END)
 
-    return workflow.compile()
+    # Add memory/checkpointing
+    memory = MemorySaver()
+    return workflow.compile(checkpointer=memory)
