@@ -1,40 +1,61 @@
-# VibeForge IDE - Production .gitignore
-
-# Dependencies (future Next.js / tooling)
+# Dependencies
 node_modules/
-.pnp
-.pnp.js
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Testing
-coverage/
-
-# Production build (future)
-build/
-dist/
+# Next.js
 .next/
 out/
+build/
 
-# Misc
+# Python
+*.egg-info/
+dist/
+*.egg
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
-*.pem
+Thumbs.db
 
-# Debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
 
-# Local env files
-.env
-.env*.local
+# Testing
+coverage/
+.nyc_output/
 
-# Vercel / deployment
+# Misc
+*.pem
 .vercel
+.railway
 
-# IDE / Editor
-.vscode/
-.idea/
-*.swp
-*~
-
-# OS generated
-Thumbs.db
+# LangChain / LLM cache
+__langchain_cache__/
+chroma/
