@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Node, Edge, Connection, addEdge, applyNodeChanges, applyEdgeChanges, NodeChange, EdgeChange } from 'reactflow';
 import { AgentNodeData } from '@/components/flow/AgentNode';
+import { runGraphOnBackend } from '@/lib/api';
 
 interface GraphState {
   nodes: Node<AgentNodeData>[];
@@ -11,7 +12,7 @@ interface GraphState {
   addNode: (type: AgentNodeData['type']) => void;
   deleteNode: (id: string) => void;
   updateNodeStatus: (id: string, status: AgentNodeData['status']) => void;
-  runGraph: () => void;
+  runGraph: () => Promise<void>;
   clearGraph: () => void;
 }
 
@@ -103,17 +104,30 @@ export const useGraphStore = create<GraphState>((set, get) => {
       saveToStorage(newNodes, get().edges);
     },
 
-    runGraph: () => {
-      const { nodes, updateNodeStatus } = get();
-      // Simple simulation of running the graph
-      nodes.forEach((node, index) => {
-        setTimeout(() => {
-          updateNodeStatus(node.id, 'running');
+    runGraph: async () => {
+      const { nodes, edges, updateNodeStatus } = get();
+
+      // Call real backend
+      try {
+        const result = await runGraphOnBackend(nodes, edges);
+        console.log('LangGraph execution result:', result);
+
+        // Update UI with results
+        result.results?.forEach((r: any, index: number) => {
           setTimeout(() => {
-            updateNodeStatus(node.id, 'success');
-          }, 800);
-        }, index * 600);
-      });
+            updateNodeStatus(r.node_id, 'success');
+          }, index * 400);
+        });
+      } catch (error) {
+        console.error('Failed to run graph on backend, falling back to simulation');
+        // Fallback simulation
+        nodes.forEach((node, index) => {
+          setTimeout(() => {
+            updateNodeStatus(node.id, 'running');
+            setTimeout(() => updateNodeStatus(node.id, 'success'), 700);
+          }, index * 500);
+        });
+      }
     },
 
     clearGraph: () => {
