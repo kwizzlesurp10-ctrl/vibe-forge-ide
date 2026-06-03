@@ -2,7 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Play, RotateCw } from 'lucide-react';
+import { Play, RotateCw, Trash2 } from 'lucide-react';
 import NodePalette from '@/components/flow/NodePalette';
 import SelfImprovementPanel from '@/components/SelfImprovementPanel';
 import { useGraphStore } from '@/lib/store/graphStore';
@@ -13,7 +13,7 @@ const AgentGraph = dynamic(() => import('@/components/flow/AgentGraph'), {
 });
 
 export default function VibeForgeIDE() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode } = useGraphStore();
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, runGraph, clearGraph } = useGraphStore();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -28,10 +28,10 @@ export default function VibeForgeIDE() {
           </div>
 
           <div className="flex items-center gap-3 text-sm">
-            <button className="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-[var(--border-subtle)] hover:bg-[var(--bg-panel)] transition-colors">
-              <RotateCw size={14} /> Self-Improve
+            <button onClick={clearGraph} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] hover:bg-red-950/30 text-red-400 transition-colors">
+              <Trash2 size={14} /> Clear
             </button>
-            <button className="flex items-center gap-2 px-5 py-1.5 rounded-lg bg-white text-black font-medium hover:bg-zinc-200 transition-colors">
+            <button onClick={runGraph} className="flex items-center gap-2 px-5 py-1.5 rounded-lg bg-[var(--neon-lime)] text-black font-medium hover:brightness-110 transition-all">
               <Play size={14} /> Run Graph
             </button>
           </div>
@@ -45,8 +45,9 @@ export default function VibeForgeIDE() {
           <div className="p-4 flex-1 overflow-auto text-sm space-y-1">
             <div className="section-header mb-2">Current Graph</div>
             {nodes.map((node) => (
-              <div key={node.id} className="px-3 py-1.5 text-xs rounded bg-[var(--bg-elevated)] font-mono">
+              <div key={node.id} className="px-3 py-1.5 text-xs rounded bg-[var(--bg-elevated)] font-mono flex justify-between items-center">
                 {node.data.label}
+                <span className="text-[10px] text-zinc-500">{node.data.status || 'idle'}</span>
               </div>
             ))}
           </div>
@@ -85,7 +86,7 @@ export default function VibeForgeIDE() {
       </div>
 
       <div className="h-8 border-t border-[var(--border-subtle)] bg-[var(--bg-deep)] text-xs flex items-center px-4 text-zinc-500 font-mono">
-        <div className="flex-1">Production • TypeScript strict • React Flow v11 • Self-Improvement Protocol v2</div>
+        <div className="flex-1">Production • TypeScript strict • React Flow v11 • Self-Improvement Protocol v2 • Persisted</div>
         <div>{nodes.length} nodes • {edges.length} edges</div>
       </div>
     </div>
