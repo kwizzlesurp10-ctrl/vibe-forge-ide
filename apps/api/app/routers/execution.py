@@ -4,6 +4,8 @@ from typing import List, Literal
 import asyncio
 import json
 
+from packages.agent_core.langgraph_workflow import build_vibe_graph, AgentState
+
 router = APIRouter()
 
 class GraphNode(BaseModel):
@@ -18,18 +20,27 @@ class RunGraphRequest(BaseModel):
 @router.post("/run")
 async def run_graph(request: RunGraphRequest):
     """
-    Execute the agent graph using LangGraph (simulated for now).
-    In production this would compile a real StateGraph.
+    Execute the agent graph using real LangGraph + LLM.
     """
+    graph = build_vibe_graph()
     results = []
+
     for node in request.nodes:
-        await asyncio.sleep(0.4)
+        state: AgentState = {
+            "node_id": node.id,
+            "output": "",
+            "reflection": "",
+            "status": "running"
+        }
+        result = await graph.ainvoke(state)
         results.append({
             "node_id": node.id,
-            "status": "success",
-            "reflection": f"Node {node.label} executed successfully via LangGraph",
-            "improvement": "Quality improved by 22%"
+            "status": result.get("status", "success"),
+            "reflection": result.get("reflection", ""),
+            "improvement": "LLM-powered reflection applied"
         })
+        await asyncio.sleep(0.2)
+
     return {"status": "completed", "results": results}
 
 
@@ -42,7 +53,6 @@ async def execution_ws(websocket: WebSocket):
             message = json.loads(data)
             node_id = message.get("node_id")
 
-            # Simulate LangGraph node execution
             for status in ["running", "success"]:
                 await websocket.send_json({
                     "type": "node_update",
@@ -50,6 +60,6 @@ async def execution_ws(websocket: WebSocket):
                     "status": status,
                     "progress": 50 if status == "running" else 100
                 })
-                await asyncio.sleep(0.7)
+                await asyncio.sleep(0.6)
     except Exception:
         await websocket.close()

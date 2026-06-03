@@ -3,7 +3,8 @@ Production LangGraph Workflow for VibeForge IDE
 """
 
 from langgraph.graph import StateGraph, END
-from typing import TypedDict, Literal
+from typing import TypedDict, Literal, Any
+from .llm import generate_reflection
 
 class AgentState(TypedDict):
     node_id: str
@@ -12,17 +13,18 @@ class AgentState(TypedDict):
     status: Literal["idle", "running", "success", "error"]
 
 
-def prompt_node(state: AgentState):
+async def prompt_node(state: AgentState):
     return {"output": f"Prompt generated for {state['node_id']}", "status": "success"}
 
 
-def agent_node(state: AgentState):
+async def agent_node(state: AgentState):
     return {"output": f"Agent executed for {state['node_id']}", "status": "success"}
 
 
-def reflection_node(state: AgentState):
+async def reflection_node(state: AgentState):
+    reflection = await generate_reflection(state.get("output", ""))
     return {
-        "reflection": f"Reflection complete for {state['node_id']}",
+        "reflection": reflection,
         "status": "success"
     }
 
