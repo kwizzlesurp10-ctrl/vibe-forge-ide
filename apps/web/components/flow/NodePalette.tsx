@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { Zap, Bot, RefreshCw, Wrench } from 'lucide-react';
+import type { AgentNodeData } from '@/components/flow/AgentNode';
 
-const nodeTypes = [
+const nodeTypes: { type: AgentNodeData['type']; label: string; icon: typeof Zap; color: string }[] = [
   { type: 'prompt', label: 'Prompt', icon: Zap, color: 'var(--neon-cyan)' },
   { type: 'agent', label: 'Agent', icon: Bot, color: 'var(--neon-magenta)' },
   { type: 'reflection', label: 'Reflection', icon: RefreshCw, color: 'var(--neon-lime)' },
@@ -11,7 +12,7 @@ const nodeTypes = [
 ];
 
 interface NodePaletteProps {
-  onAddNode: (type: string) => void;
+  onAddNode: (type: AgentNodeData['type']) => void;
 }
 
 export default function NodePalette({ onAddNode }: NodePaletteProps) {

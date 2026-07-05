@@ -1,21 +1,32 @@
 import { create } from 'zustand';
-import { Node, Edge, Connection, addEdge } from 'reactflow';
+import {
+  Node,
+  Edge,
+  Connection,
+  addEdge,
+  applyNodeChanges,
+  applyEdgeChanges,
+  type NodeChange,
+  type EdgeChange,
+} from 'reactflow';
 import { AgentNodeData } from '@/components/flow/AgentNode';
+import { persistWorkspace } from '@/lib/persistence/syncWorkspace';
 
 interface GraphState {
   nodes: Node<AgentNodeData>[];
   edges: Edge[];
-  setNodes: (nodes: Node<AgentNodeData>[]) => void;
-  setEdges: (edges: Edge[]) => void;
+  onNodesChange: (changes: NodeChange[]) => void;
+  onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
   addNode: (type: AgentNodeData['type']) => void;
   deleteNode: (id: string) => void;
   updateNodeData: (id: string, data: Partial<AgentNodeData>) => void;
+  hydrateGraph: (nodes: Node<AgentNodeData>[], edges: Edge[]) => void;
 }
 
 let nodeId = 10;
 
-export const useGraphStore = create<GraphState>((set, get) => ({
+export const useGraphStore = create<GraphState>((set) => ({
   nodes: [
     { id: '1', type: 'agent', position: { x: 150, y: 100 }, data: { label: 'System Prompt', type: 'prompt' } },
     { id: '2', type: 'agent', position: { x: 420, y: 240 }, data: { label: 'Primary Agent', type: 'agent' } },
@@ -26,13 +37,20 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     { id: 'e2-3', source: '2', target: '3', animated: true },
   ],
 
-  setNodes: (nodes) => set({ nodes }),
-  setEdges: (edges) => set({ edges }),
+  onNodesChange: (changes) => {
+    set((state) => ({ nodes: applyNodeChanges(changes, state.nodes) }));
+    persistWorkspace();
+  },
 
-  onConnect: (connection) =>
-    set((state) => ({
-      edges: addEdge({ ...connection, animated: true }, state.edges),
-    })),
+  onEdgesChange: (changes) => {
+    set((state) => ({ edges: applyEdgeChanges(changes, state.edges) }));
+    persistWorkspace();
+  },
+
+  onConnect: (connection) => {
+    set((state) => ({ edges: addEdge({ ...connection, animated: true }, state.edges) }));
+    persistWorkspace();
+  },
 
   addNode: (type) => {
     const newNode: Node<AgentNodeData> = {
@@ -45,18 +63,25 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       },
     };
     set((state) => ({ nodes: [...state.nodes, newNode] }));
+    persistWorkspace();
   },
 
-  deleteNode: (id) =>
+  deleteNode: (id) => {
     set((state) => ({
       nodes: state.nodes.filter((n) => n.id !== id),
       edges: state.edges.filter((e) => e.source !== id && e.target !== id),
-    })),
+    }));
+    persistWorkspace();
+  },
 
-  updateNodeData: (id, newData) =>
+  updateNodeData: (id, newData) => {
     set((state) => ({
       nodes: state.nodes.map((node) =>
         node.id === id ? { ...node, data: { ...node.data, ...newData } } : node
       ),
-    })),
+    }));
+    persistWorkspace();
+  },
+
+  hydrateGraph: (nodes, edges) => set({ nodes, edges }),
 }));

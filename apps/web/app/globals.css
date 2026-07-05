@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
-
 :root {
   --neon-cyan: #00f5ff;
   --neon-magenta: #ff00aa;
@@ -11,18 +9,30 @@
   --bg-panel: #121218;
   --bg-elevated: #1a1a22;
   --border-subtle: #27272a;
+  --accent-glow: rgba(0, 245, 255, 0.12);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+[data-theme='glitch'] .neon-text {
+  animation: glitch-flicker 4s infinite;
+}
+
+@keyframes glitch-flicker {
+  0%, 95%, 100% { opacity: 1; }
+  96% { opacity: 0.85; transform: translateX(1px); }
+  97% { opacity: 1; transform: translateX(-1px); }
+  98% { opacity: 0.9; }
+}
+
 body {
-  font-family: 'Inter', var(--font-geist-sans), system_ui, sans-serif;
+  font-family: var(--font-inter), var(--font-geist-sans), system_ui, sans-serif;
   background-color: var(--bg-deep);
   color: var(--panda-white);
 }
 
 .font-display {
-  font-family: 'Space Grotesk', 'Inter', var(--font-geist-sans), sans-serif;
+  font-family: var(--font-space-grotesk), var(--font-inter), var(--font-geist-sans), sans-serif;
   font-weight: 600;
   letter-spacing: -0.025em;
 }
