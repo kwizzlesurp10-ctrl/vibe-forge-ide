@@ -62,7 +62,15 @@ gcloud storage buckets create gs://$BUCKET_NAME \
   --uniform-bucket-level-access
 ```
 
-## 5. Submit Cloud Build Job
+## 5. Budget Optimizations & Cost Controls ($1,000 Credit Limit)
+
+To ensure strict compliance with your Google Cloud credit limit, the following optimizations are applied during deployment:
+- **Min Instances (`--min-instances 0`):** Scales instances down to zero when idle to prevent continuous idle costs.
+- **Concurrency (`--concurrency 80`):** Allows handling up to 80 concurrent requests per instance, maximizing resource efficiency and minimizing required container scaling.
+- **CPU Allocation (`--cpu-throttling` / CPU allocated during request processing only):** CPU is only allocated during request processing (request-based billing) rather than being billed continuously.
+
+
+## 6. Submit Cloud Build Job
 
 With the infrastructure in place, use Cloud Build to build the Docker images, push them to Artifact Registry, and deploy them to Cloud Run.
 
@@ -74,7 +82,7 @@ gcloud builds submit --config cloudbuild.yaml .
 
 *Note: The first build might take a few minutes. Subsequent builds will be faster if Docker caching is configured, though this simple setup provides a solid starting point within the free tier.*
 
-## 6. Verify Deployments
+## 7. Verify Deployments
 
 Once the build finishes successfully, retrieve the URLs of your deployed Cloud Run services:
 

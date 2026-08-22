@@ -29,6 +29,11 @@ steps:
       - '--allow-unauthenticated'
       - '--platform'
       - 'managed'
+      - '--min-instances'
+      - '0'
+      - '--concurrency'
+      - '80'
+      - '--cpu-throttling'
 
   # 6. Deploy backend to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -44,6 +49,11 @@ steps:
       - '--allow-unauthenticated'
       - '--platform'
       - 'managed'
+      - '--min-instances'
+      - '0'
+      - '--concurrency'
+      - '80'
+      - '--cpu-throttling'
       - '--set-env-vars'
       - 'PROJECT_ID=$PROJECT_ID'
 
