@@ -38,3 +38,11 @@ yarn-error.log*
 
 # OS generated
 Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.class
+venv/
+.venv/
+.env/

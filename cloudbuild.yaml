@@ -1,0 +1,55 @@
+steps:
+  # 1. Build frontend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/vibe-forge-repo/vibe-forge-frontend:$COMMIT_SHA', './frontend']
+
+  # 2. Build backend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/vibe-forge-repo/vibe-forge-backend:$COMMIT_SHA', './backend']
+
+  # 3. Push frontend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/vibe-forge-repo/vibe-forge-frontend:$COMMIT_SHA']
+
+  # 4. Push backend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/vibe-forge-repo/vibe-forge-backend:$COMMIT_SHA']
+
+  # 5. Deploy frontend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'vibe-forge-frontend'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/vibe-forge-repo/vibe-forge-frontend:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--allow-unauthenticated'
+      - '--platform'
+      - 'managed'
+
+  # 6. Deploy backend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'vibe-forge-backend'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/vibe-forge-repo/vibe-forge-backend:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--allow-unauthenticated'
+      - '--platform'
+      - 'managed'
+      - '--set-env-vars'
+      - 'PROJECT_ID=$PROJECT_ID'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/vibe-forge-repo/vibe-forge-frontend:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/vibe-forge-repo/vibe-forge-backend:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
